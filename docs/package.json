@@ -1,0 +1,14 @@
+{
+  "name": "transroute-docs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node vp.mjs dev",
+    "build": "node vp.mjs build",
+    "preview": "node vp.mjs preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.4.0"
+  }
+}

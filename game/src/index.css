@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  /* vendored dark theme tokens（自包含，供地图组件复用；与父项目 transroute 同源但已独立演进） */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #0b1220;
+  color: #e2e8f0;
+  font-family: ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei",
+    -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* thin scrollbars for panels */
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}

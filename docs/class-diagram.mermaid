@@ -1,0 +1,195 @@
+classDiagram
+    %% ===================== 用户与世界上下文 =====================
+    class User {
+        +UUID ID
+        +string Username
+        +string PasswordHash
+        +string Email
+        +time.Time CreatedAt
+        +[]*Company Companies
+    }
+    class World {
+        +UUID ID
+        +string Name
+        +int TickSeconds
+        +string Status
+        +int CurrentDay
+        +string SeedConfig
+        +time.Time CreatedAt
+        +[]*Company Companies
+        +[]*CargoPool CargoPools
+        +[]*Alliance Alliances
+    }
+
+    %% ===================== 公司（玩家在世界的化身） =====================
+    class Company {
+        +UUID ID
+        +UUID WorldID
+        +UUID OwnerID
+        +string Name
+        +int64 Cash
+        +int Reputation
+        +int64 Debt
+        +int64 NetWorth
+        +*UUID AllianceID
+        +time.Time CreatedAt
+    }
+    class Node {
+        +UUID ID
+        +UUID CompanyID
+        +UUID WorldID
+        +string CityID
+        +string CityName
+        +NodeTier Tier
+        +int BuiltDay
+        +int Capacity
+        +float HandlingDays
+        +float Lat
+        +float Lng
+    }
+    class Vehicle {
+        +UUID ID
+        +UUID CompanyID
+        +string TypeID
+        +TransportMode Mode
+        +int CapacityTons
+        +int SpeedKmh
+        +bool Owned
+        +int64 LeaseDaily
+        +*int LeaseUntilDay
+        +*int BusyUntilDay
+        +VehicleStatus Status
+    }
+    class Lane {
+        +UUID ID
+        +UUID CompanyID
+        +UUID WorldID
+        +string FromCityID
+        +string ToCityID
+        +TransportMode Mode
+        +int CapacityTonsPerDay
+        +int PricePerTon
+        +float TransitDays
+        +bool Interline
+        +bool Active
+        +int CreatedDay
+    }
+
+    %% ===================== 货量池与订单 =====================
+    class CargoPool {
+        +UUID ID
+        +UUID WorldID
+        +string FromCityID
+        +string ToCityID
+        +float TotalTons
+        +int WindowDays
+        +int GeneratedDay
+        +int ExpiresDay
+    }
+    class Order {
+        +UUID ID
+        +UUID WorldID
+        +UUID CompanyID
+        +OrderKind Kind
+        +string FromCityID
+        +string ToCityID
+        +float Tons
+        +int PricePerTon
+        +int64 Reward
+        +TransportMode Mode
+        +int AcceptedDay
+        +int DeadlineDay
+        +OrderStatus Status
+        +*UUID VehicleID
+        +*UUID LaneID
+    }
+
+    %% ===================== 联盟 / 联运 =====================
+    class Alliance {
+        +UUID ID
+        +UUID WorldID
+        +string Name
+        +bool InterlineEnabled
+        +int CreatedDay
+    }
+    class AllianceMember {
+        +UUID ID
+        +UUID AllianceID
+        +UUID CompanyID
+        +int JoinedDay
+        +MemberRole Role
+    }
+
+    %% ===================== 玩家市场 =====================
+    class MarketListing {
+        +UUID ID
+        +UUID WorldID
+        +UUID ListerCompanyID
+        +ListingType Type
+        +string FromCityID
+        +string ToCityID
+        +float Tons
+        +int PricePerTon
+        +TransportMode Mode
+        +ListingStatus Status
+        +int CreatedDay
+        +*int FilledDay
+        +*UUID BuyerCompanyID
+    }
+
+    %% ===================== 金融 / 账本 / 评分 =====================
+    class Loan {
+        +UUID ID
+        +UUID CompanyID
+        +int64 Principal
+        +float RatePerDay
+        +int TakenDay
+        +*int DueDay
+        +bool Repaid
+    }
+    class LedgerEvent {
+        +UUID ID
+        +UUID CompanyID
+        +UUID WorldID
+        +int Day
+        +string Type
+        +int64 Amount
+        +string Note
+    }
+    class Rating {
+        +UUID ID
+        +UUID CompanyID
+        +UUID WorldID
+        +string FromCityID
+        +string ToCityID
+        +float PriceScore
+        +float TransitScore
+        +float CoverageScore
+        +float InterlineScore
+        +float Composite
+        +int ComputedDay
+    }
+
+    %% ===================== 关系（清晰标注） =====================
+    User "1" --> "0..*" Company : owns
+    World "1" --> "0..*" Company : contains
+    World "1" --> "0..*" CargoPool : generates
+    World "1" --> "0..*" Alliance : contains
+    Company "1" --> "0..*" Node : builds
+    Company "1" --> "0..*" Vehicle : owns/leases
+    Company "1" --> "0..*" Lane : offers
+    Company "1" --> "0..*" Order : serves
+    Company "1" --> "0..*" Loan : borrows
+    Company "1" --> "0..*" LedgerEvent : records
+    Company "1" --> "0..*" Rating : scored
+    Company "0..1" ..> "0..1" Alliance : member(via AllianceMember)
+    Alliance "1" --> "0..*" AllianceMember : has
+    AllianceMember "*" --> "1" Company : references
+    AllianceMember "*" --> "1" Alliance : references
+    CargoPool "*" --> "1" World : belongs
+    Order "*" --> "1" Company : assigned
+    Order "0..1" --> "0..1" Vehicle : dispatched
+    Order "0..1" --> "0..1" Lane : via
+    MarketListing "*" --> "1" World : in
+    MarketListing "*" --> "1" Company : lister
+    MarketListing "0..1" --> "0..1" Company : buyer

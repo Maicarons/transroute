@@ -1,0 +1,33 @@
+# 本地自部署 OSRM 路由服务（基于 OpenStreetMap 真实路网，免 Key）
+#
+# 前置：已安装并启动 Docker Desktop（Windows 上需先打开 Docker Desktop GUI）。
+# 数据准备：先运行 scripts/setup-osrm.sh 下载并构建路网（生成 ./osrm-data/<region>-latest.osrm），
+#           再执行 `docker compose up -d` 启动路由 + CORS 网关（宿主 localhost:5000）。
+# 前端对接：在「真实道路」卡片选择「OSRM·本地」即可，无需任何前端配置——
+#           nginx 网关已补 CORS 头，浏览器可跨源访问 http://localhost:5000。
+#
+# 切换省份/全国：OSRM_REGION=guangdong（默认，需先 setup-osrm.sh guangdong）。
+#                全国：OSRM_REGION=china（需 setup-osrm.sh china，注意全国 pbf 约 1.5GB、内存需求高）。
+
+services:
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: transroute-osrm
+    command: osrm-routed --algorithm=MLD /data/${OSRM_REGION:-guangdong}-latest.osrm
+    volumes:
+      - ./osrm-data:/data
+    # 仅暴露给同 compose 网络内的 nginx，不直接对宿主开放
+    expose:
+      - "5000"
+    restart: unless-stopped
+
+  osrm-cors:
+    image: nginx:alpine
+    container_name: transroute-osrm-cors
+    volumes:
+      - ./nginx-osrm.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "5000:80"
+    depends_on:
+      - osrm
+    restart: unless-stopped

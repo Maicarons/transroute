@@ -1,0 +1,68 @@
+%% ===== 场景①：玩家登录 → 加入世界 → WS 建连 → 收到 worldState 快照 =====
+sequenceDiagram
+    actor P as 玩家(Client)
+    participant API as REST Handler
+    participant AUTH as Auth
+    participant WM as WorldManager
+    participant WS as WSHub
+    participant REPO as Repo
+
+    P->>API: POST /api/auth/login {username, pw}
+    API->>AUTH: Verify(bcrypt)
+    AUTH-->>API: JWT token
+    API-->>P: {token}
+
+    P->>API: POST /api/worlds/:id/join (Bearer)
+    API->>REPO: Create/attach Company(ownerId, worldId)
+    REPO-->>API: {companyId}
+    API-->>P: {companyId}
+
+    P->>WS: GET /ws?token&worldId (HTTP upgrade)
+    WS->>AUTH: Parse JWT, resolve Company
+    WS->>WM: Subscribe(companyId, worldId)
+    WM->>REPO: Load snapshot(day, companies, cargoPools, market)
+    REPO-->>WM: worldState
+    WM-->>WS: worldState
+    WS-->>P: {type:"world_snapshot", day, companies[], cargoPools[], market[]}
+
+%% ===== 场景②：服务端 tick 循环（生成货量→聚合运力与评分→按比例分配→记账→广播增量） =====
+sequenceDiagram
+    participant T as Ticker(每 TickSeconds)
+    participant SIM as SimEngine
+    participant REPO as Repo
+    participant WM as WorldManager
+    participant WS as WSHub
+
+    T->>SIM: Tick(worldId)
+    SIM->>REPO: 1. 截断过期 CargoPool(day>ExpiresDay)，生成新 D(OD)
+    SIM->>SIM: 2. 对每个有≥1 Lane 的 OD 计算 rating_i(OD)
+    SIM->>SIM: 3. cargo_i = D(OD)*rating_i / Σrating → 生成 Order(kind=contract)
+    SIM->>REPO: 4. 结算到达运单(reward-fuel, reputation+1, 释放车辆)
+    SIM->>REPO: 5. 状态迁移(完成/过期, 超时 reputation-3)
+    SIM->>REPO: 6. 租赁扣费 & 到期自动退租
+    SIM->>REPO: 7. 贷款计息(debt*LOAN_DAILY_RATE)
+    SIM->>REPO: 8. 玩家市场撮合(open listings)
+    SIM->>REPO: 9. 重算净资产 & 写 Rating 快照 & 排行榜
+    SIM->>REPO: 10. 破产检查(netWorth < BANKRUPTCY_FLOOR)
+    SIM->>WM: commit(world.CurrentDay++)
+    WM->>WS: 广播 {type:"delta", day, companies[], newOrders[], market[], events[]}
+    WS-->>Client: push delta
+
+%% ===== 场景③：派单/建点/借贷等 REST 动作经 handler 改状态并广播 =====
+sequenceDiagram
+    actor P as 玩家(Client)
+    participant API as REST Handler
+    participant SVC as CompanyService
+    participant REPO as Repo
+    participant WM as WorldManager
+    participant WS as WSHub
+
+    P->>API: POST /api/companies/:id/lanes {from,to,mode,capacity,price,transitDays,interline}
+    API->>SVC: CreateLane(companyId, body)
+    SVC->>SVC: 校验现金/两端已建点/模式合法(货轮需皆沿海)
+    SVC->>REPO: Upsert Lane(Active=true)
+    SVC->>REPO: LedgerEvent(fee)
+    SVC->>WM: Notify(companyId)
+    WM->>WS: 广播 {type:"delta", lanes[], companies[]}
+
+    Note over P,WS: 建点 / 派单 / 借贷 / 还款 同构：Handler → Service → Repo → Notify → Broadcast

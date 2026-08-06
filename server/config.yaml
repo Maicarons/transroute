@@ -1,0 +1,21 @@
+# 《物流大亨》多人化后端运行配置
+# 所有字段均可被环境变量覆盖（见下方 TR_* 前缀）。
+# 完整常量定义见 server/internal/model/constants.go（§8.4）。
+
+# JWT 签名密钥（生产务必替换；也可通过 TR_JWT_SECRET 覆盖）。
+jwt_secret: "transroute-dev-secret-please-change"
+
+# SQLite 数据库文件路径（相对/绝对均可；父目录会自动创建）。
+db_path: "transroute.db"
+
+# HTTP 监听端口。
+http_port: 8080
+
+# 世界默认时间流速：N 秒 = 1 游戏日（§8.4 DefaultTickSeconds=10）。
+tick_seconds: 10
+
+# 托管的前端构建产物目录（client/dist）。
+client_dir: "./client/dist"
+
+# 是否由后端直接托管前端静态文件（生产可关闭，由 Nginx/CDN 托管）。
+serve_client: true

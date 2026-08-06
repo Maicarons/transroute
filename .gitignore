@@ -1,0 +1,41 @@
+# ===== Dependencies =====
+node_modules/
+.pnp/
+.pnp.js
+
+# ===== Build outputs =====
+dist/
+build/
+out/
+*.tsbuildinfo
+*.vite/
+
+# ===== Go =====
+*.exe
+*.out
+*.test
+/vendor/
+# go.sum is committed (generated locally via `go mod tidy`)
+
+# ===== Secrets / local env =====
+.env
+.env.*
+!.env.example
+
+# ===== Logs =====
+*.log
+
+# ===== Debug / probe artifacts =====
+_*
+
+# ===== Local OSRM data (large PBF extracts) =====
+osrm-data/
+
+# ===== Editor / OS =====
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ===== Local workbuddy memory (not part of the project) =====
+.workbuddy/
