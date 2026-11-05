@@ -3,7 +3,7 @@ module github.com/transroute/server
 go 1.22
 
 require (
-	github.com/go-fiber/fiber/v2 v2.52.5
+	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/fasthttp/websocket v1.5.3
 	github.com/glebarez/sqlite v1.11.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
