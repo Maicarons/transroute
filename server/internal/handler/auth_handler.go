@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/go-fiber/fiber/v2"
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/transroute/server/internal/auth"
 	"github.com/transroute/server/internal/repo"
